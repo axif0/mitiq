@@ -35,9 +35,9 @@ def pauli_twirling_calibrate(
     The number of :math:`f_b` is :math:`2^n`, or :math:`\sum_{i=1}^d C_n^i` if
     the locality :math:`d` is given.
 
-    In the notation of :cite:`chen2021robust`, this function estimates the
-    coefficient :math:`f_b`, which are expansion coefficients of the twirled
-    channel :math:`\mathcal{M}=\sum_b f_b\Pi_b`.
+    In the notation of :footcite:t:`chen2021robust`, this function estimates
+    the coefficient :math:`f_b`, which are expansion coefficients of the
+    twirled channel :math:`\mathcal{M}=\sum_b f_b\Pi_b`.
 
     In practice, the output of this function can be used as calibration data
     for performing the classical shadows protocol in a way which is more
@@ -63,6 +63,8 @@ def pauli_twirling_calibrate(
 
     Returns:
         A dictionary containing the calibration outcomes.
+
+    .. footbibliography::
     """
     if zero_state_shadow_outcomes is None:
         if qubits is None:
