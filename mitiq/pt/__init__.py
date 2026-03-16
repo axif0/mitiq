@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from mitiq.pt.pt import (
+    add_noise_to_two_qubit_gates,
     generate_pauli_twirl_variants,
     twirl_CNOT_gates,
     twirl_CZ_gates,

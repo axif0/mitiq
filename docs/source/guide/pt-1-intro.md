@@ -13,10 +13,6 @@ kernelspec:
 
 # How do I use PT?
 
-```{admonition} Warning:
-This user guide is still under construction and may change in the near future. 
-```
-
 As with all techniques, PT is compatible with any frontend supported by Mitiq:
 
 ```{code-cell} ipython3
