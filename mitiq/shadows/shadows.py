@@ -63,8 +63,6 @@ def pauli_twirling_calibrate(
 
     Returns:
         A dictionary containing the calibration outcomes.
-
-    .. footbibliography::
     """
     if zero_state_shadow_outcomes is None:
         if qubits is None:
