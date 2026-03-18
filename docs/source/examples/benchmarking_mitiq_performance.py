@@ -11,14 +11,20 @@ benchmark circuits and computes the average improvement factor.
 """
 
 import cirq
+import matplotlib.pyplot as plt
 import numpy as np
 
 from mitiq import Calibrator, MeasurementResult, Settings
-from mitiq.zne.inference import LinearFactory
-from mitiq.zne.scaling import fold_global
+from mitiq.zne.inference import ExpFactory, LinearFactory, RichardsonFactory
+from mitiq.zne.scaling import (
+    fold_gates_at_random,
+    fold_global,
+    insert_id_layers,
+)
 
-NOISE_LEVEL = 0.01
-SHOTS = 1_000
+NOISE_LEVEL_1Q = 0.001
+NOISE_LEVEL_2Q = 0.01
+SHOTS = 5_000
 
 
 def noisy_execute(circuit: cirq.Circuit) -> MeasurementResult:
@@ -27,7 +33,25 @@ def noisy_execute(circuit: cirq.Circuit) -> MeasurementResult:
     The Calibrator requires an executor that returns MeasurementResult
     (bitstrings/counts), not expectation values.
     """
-    noisy_circuit = circuit.with_noise(cirq.depolarize(NOISE_LEVEL))
+    noisy_circuit = cirq.Circuit()
+    for op in circuit.all_operations():
+        noisy_circuit.append(op)
+        if isinstance(op.gate, cirq.MeasurementGate):
+            continue
+
+        # In reality, 2-qubit gates are usually far noisier
+        # than 1-qubit gates. We model this realistic hardware constraint by
+        # injecting different depolarizing error rates directly after
+        # each operation!
+        if len(op.qubits) == 1:
+            noisy_circuit.append(
+                cirq.depolarize(NOISE_LEVEL_1Q).on(*op.qubits)
+            )
+        elif len(op.qubits) == 2:
+            noisy_circuit.append(
+                cirq.depolarize(NOISE_LEVEL_2Q, n_qubits=2).on(*op.qubits)
+            )
+
     result = cirq.DensityMatrixSimulator().run(
         noisy_circuit, repetitions=SHOTS
     )
@@ -65,8 +89,39 @@ benchmark_settings = Settings(
     strategies=[
         {
             "technique": "zne",
+            "scale_noise": fold_global, # Performs fine on shallow circuits!
+            "factory": LinearFactory([1.0, 3.0, 5.0]), 
+        },
+        {
+            "technique": "zne",
+            "scale_noise": fold_global, # It behaves much more predictably on 
+                                        # short circuits when avoiding
+                                        # fractions or even numbers.
+            "factory": RichardsonFactory([1.0, 3.0, 5.0]),
+        },
+        #  asymptote=0.25: Since we use a depolarizing
+        # channel on 2-qubit gates, the signal physically decays exponentially 
+        # toward a fully mixed random state (1/4 probability). Pinning the 
+        # asymptote prevents convergence failures and lets the math perfectly 
+        # fit the deep circuit data!
+        {
+            "technique": "zne",
             "scale_noise": fold_global,
+            "factory": ExpFactory([1.0, 3.0, 5.0], asymptote=0.25),
+        },
+        # Instead of scaling the entire circuit globally at the end, 
+        # fold logic gates at random internally.
+        {
+            "technique": "zne",
+            "scale_noise": fold_gates_at_random,
             "factory": LinearFactory([1.0, 3.0, 5.0]),
+        },
+        # Rather than applying inverse logic gates, this simply idles
+        # the qubits to accumulate pure time-decoherence.
+        {
+            "technique": "zne",
+            "scale_noise": insert_id_layers,
+            "factory": RichardsonFactory([1.0, 3.0, 5.0]),
         },
     ],
 )
@@ -127,6 +182,39 @@ def main() -> None:
 
     best = cal.best_strategy()
     print(f"\nBest strategy: {best.to_dict()}")
+
+    # We test how perfectly these mathematical extrapolation factories
+    # mitigate noise against larger circuit sizes, we scatter plot everything
+    # against the "hardware cost".
+    plt.figure(figsize=(10, 6))
+    for strategy_id, strategy in enumerate(cal.strategies):
+        resources = []
+        improvements = []
+        for problem in cal.problems:
+            noisy_err, mitigated_err = cal.results._get_errors(
+                strategy_id=strategy_id, problem_id=problem.id
+            )
+            factor = noisy_err / mitigated_err if mitigated_err > 0 else np.inf
+            resources.append(problem.circuit_depth)
+            improvements.append(factor)
+
+        s_dict = strategy.to_dict()
+        factory_name = s_dict.get("factory", "Unknown")
+        scale_name = s_dict.get("scale_method", "Unknown")
+        label = f"{factory_name} ({scale_name})"
+        plt.scatter(resources, improvements, label=label, s=80, alpha=0.7)
+
+    plt.axhline(y=1.0, color="r", linestyle="--", label="No Improvement")
+    plt.xlabel("Resources Used (Circuit Depth)", fontsize=12)
+    plt.ylabel("Improvement Factor", fontsize=12)
+    plt.title("ZNE Strategy Performance vs Resources", fontsize=14)
+    plt.legend()
+    plt.grid(True, linestyle=":", alpha=0.6)
+    plt.tight_layout()
+    plt.show()
+    # If we want to save the plot, we can just uncomment the following lines:
+    # plt.savefig("zne_strategy_performance.png")
+    # print("\nSaved performance plot to 'zne_strategy_performance.png'")
 
 
 if __name__ == "__main__":
