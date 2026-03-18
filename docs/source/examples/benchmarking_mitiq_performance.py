@@ -89,27 +89,27 @@ benchmark_settings = Settings(
     strategies=[
         {
             "technique": "zne",
-            "scale_noise": fold_global, # Performs fine on shallow circuits!
-            "factory": LinearFactory([1.0, 3.0, 5.0]), 
+            "scale_noise": fold_global,  # Performs fine on shallow circuits!
+            "factory": LinearFactory([1.0, 3.0, 5.0]),
         },
         {
             "technique": "zne",
-            "scale_noise": fold_global, # It behaves much more predictably on 
-                                        # short circuits when avoiding
-                                        # fractions or even numbers.
+            "scale_noise": fold_global,  # It behaves much more predictably on
+            # short circuits when avoiding
+            # fractions or even numbers.
             "factory": RichardsonFactory([1.0, 3.0, 5.0]),
         },
         #  asymptote=0.25: Since we use a depolarizing
-        # channel on 2-qubit gates, the signal physically decays exponentially 
-        # toward a fully mixed random state (1/4 probability). Pinning the 
-        # asymptote prevents convergence failures and lets the math perfectly 
+        # channel on 2-qubit gates, the signal physically decays exponentially
+        # toward a fully mixed random state (1/4 probability). Pinning the
+        # asymptote prevents convergence failures and lets the math perfectly
         # fit the deep circuit data!
         {
             "technique": "zne",
             "scale_noise": fold_global,
             "factory": ExpFactory([1.0, 3.0, 5.0], asymptote=0.25),
         },
-        # Instead of scaling the entire circuit globally at the end, 
+        # Instead of scaling the entire circuit globally at the end,
         # fold logic gates at random internally.
         {
             "technique": "zne",
