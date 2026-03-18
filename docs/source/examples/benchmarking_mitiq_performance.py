@@ -8,7 +8,6 @@
 Uses the Calibrator with a single ZNE configuration across 5 distinct
 benchmark circuits and computes the average improvement factor.
 
-Reference: https://github.com/unitaryfund/mitiq/issues/2828
 """
 
 import cirq
