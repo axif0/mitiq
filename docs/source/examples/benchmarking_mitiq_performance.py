@@ -202,7 +202,10 @@ def main() -> None:
         factory_name = s_dict.get("factory", "Unknown")
         scale_name = s_dict.get("scale_method", "Unknown")
         label = f"{factory_name} ({scale_name})"
-        plt.scatter(resources, improvements, label=label, s=80, alpha=0.7)
+        avg_resource = np.mean(resources)
+        avg_improvement = np.mean(improvements)
+        
+        plt.scatter(avg_resource, avg_improvement, label=label, s=80, alpha=0.7)
 
     plt.axhline(y=1.0, color="r", linestyle="--", label="No Improvement")
     plt.xlabel("Resources Used (Circuit Depth)", fontsize=12)
