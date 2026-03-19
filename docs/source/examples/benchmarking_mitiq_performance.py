@@ -15,6 +15,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from mitiq import Calibrator, MeasurementResult, Settings
+from mitiq.pec.representations import (
+    represent_operation_with_local_depolarizing_noise,
+)
 from mitiq.zne.inference import ExpFactory, LinearFactory, RichardsonFactory
 from mitiq.zne.scaling import (
     fold_gates_at_random,
@@ -123,6 +126,18 @@ benchmark_settings = Settings(
             "scale_noise": insert_id_layers,
             "factory": RichardsonFactory([1.0, 3.0, 5.0]),
         },
+        # Instead of scaling, learn a quasi-probability representation
+        # for gates. This pays the resource cost in terms of shots
+        # (samples) rather than circuit depth.
+        {
+            "technique": "pec",
+            "representation_function": (
+                represent_operation_with_local_depolarizing_noise
+            ),
+            "is_qubit_dependent": False,
+            "noise_level": NOISE_LEVEL_2Q,
+            "num_samples": 100,
+        },
     ],
 )
 
@@ -183,11 +198,16 @@ def main() -> None:
     best = cal.best_strategy()
     print(f"\nBest strategy: {best.to_dict()}")
 
-    # We test how perfectly these mathematical extrapolation factories
-    # mitigate noise against larger circuit sizes, we scatter plot everything
-    # against the "hardware cost".
+    # Scatter plot: improvement factor vs estimated resource cost.
+    # ZNE cost  = circuit_depth × sum(scale_factors) # extra gate overhead.
+    # PEC cost  = circuit_depth × (1 + num_samples/SHOTS) # extra shot overhead
+    #             normalised into "effective depth" units so both axes are
+    #             comparable on the same plot.
     plt.figure(figsize=(10, 6))
     for strategy_id, strategy in enumerate(cal.strategies):
+        s_dict = strategy.to_dict()
+        tech = s_dict.get("technique", "")
+
         resources = []
         improvements = []
         for problem in cal.problems:
@@ -195,29 +215,53 @@ def main() -> None:
                 strategy_id=strategy_id, problem_id=problem.id
             )
             factor = noisy_err / mitigated_err if mitigated_err > 0 else np.inf
-            resources.append(problem.circuit_depth)
+
+            if tech == "ZNE":
+                scale_factors = s_dict.get("scale_factors", [1.0])
+                cost = problem.circuit_depth * sum(scale_factors)
+            elif tech == "PEC":
+                num_samples = s_dict.get("num_samples", 1)
+                cost = problem.circuit_depth * (1 + num_samples / SHOTS)
+            else:
+                cost = problem.circuit_depth
+
+            resources.append(cost)
             improvements.append(factor)
 
-        s_dict = strategy.to_dict()
-        factory_name = s_dict.get("factory", "Unknown")
-        scale_name = s_dict.get("scale_method", "Unknown")
-        label = f"{factory_name} ({scale_name})"
+        if tech == "PEC":
+            rep_name = s_dict.get("representation_function", "Unknown")
+            if "depolarizing_noise" in rep_name:
+                rep_name = "local_depolarizing"
+            samples = s_dict.get("num_samples", "Unknown")
+            label = f"PEC ({rep_name}, {samples} samples)"
+        else:
+            factory_name = s_dict.get("factory", "Unknown")
+            scale_name = s_dict.get("scale_method", "Unknown")
+            label = f"{factory_name} ({scale_name})"
+
         avg_resource = np.mean(resources)
         avg_improvement = np.mean(improvements)
-        
-        plt.scatter(avg_resource, avg_improvement, label=label, s=80, alpha=0.7)
+
+        plt.scatter(
+            avg_resource, avg_improvement, label=label, s=80, alpha=0.7
+        )
 
     plt.axhline(y=1.0, color="r", linestyle="--", label="No Improvement")
-    plt.xlabel("Resources Used (Circuit Depth)", fontsize=12)
+    plt.xlabel(
+        "Estimated Resource Cost\n"
+        "(ZNE: avg depth × Σ scale factors  |  "
+        "PEC: avg depth × (1 + samples/shots))",
+        fontsize=11,
+    )
     plt.ylabel("Improvement Factor", fontsize=12)
-    plt.title("ZNE Strategy Performance vs Resources", fontsize=14)
-    plt.legend()
+    plt.title("ZNE & PEC Strategy Performance vs Resource Cost", fontsize=14)
+    plt.legend(fontsize=9)
     plt.grid(True, linestyle=":", alpha=0.6)
     plt.tight_layout()
     plt.show()
     # If we want to save the plot, we can just uncomment the following lines:
-    # plt.savefig("zne_strategy_performance.png")
-    # print("\nSaved performance plot to 'zne_strategy_performance.png'")
+    # plt.savefig("zne_pec_strategy_performance.png")
+    # print("\nSaved performance plot to 'zne_pec_strategy_performance.png'")
 
 
 if __name__ == "__main__":
