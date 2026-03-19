@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from mitiq import Calibrator, MeasurementResult, Settings
+from mitiq.calibration.settings import Strategy
 from mitiq.pec.representations import (
     represent_operation_with_local_depolarizing_noise,
 )
@@ -28,6 +29,8 @@ from mitiq.zne.scaling import (
 NOISE_LEVEL_1Q = 0.001
 NOISE_LEVEL_2Q = 0.01
 SHOTS = 5_000
+exact_costs = {}
+current_strategy_id = None
 
 
 def noisy_execute(circuit: cirq.Circuit) -> MeasurementResult:
@@ -36,6 +39,13 @@ def noisy_execute(circuit: cirq.Circuit) -> MeasurementResult:
     The Calibrator requires an executor that returns MeasurementResult
     (bitstrings/counts), not expectation values.
     """
+    global current_strategy_id
+    if current_strategy_id is not None:
+        depth = len(list(circuit.all_operations()))
+        exact_costs[current_strategy_id] = (
+            exact_costs.get(current_strategy_id, 0) + depth
+        )
+
     noisy_circuit = cirq.Circuit()
     for op in circuit.all_operations():
         noisy_circuit.append(op)
@@ -170,6 +180,28 @@ def main() -> None:
     print(f"Number of strategies: {len(cal.strategies)}")
     print()
 
+    # Apply class-level monkeypatch to track exact operations processed
+    # through the executor per strategy.
+    orig_prop = Strategy.mitigation_function
+
+    @property
+    def wrapped_mitigation_function(self):
+        orig_func = orig_prop.fget(self)
+
+        def wrapper(circuit, executor, **kwargs):
+            global current_strategy_id
+            previous_id = current_strategy_id
+            current_strategy_id = self.id
+            try:
+                res = orig_func(circuit, executor, **kwargs)
+            finally:
+                current_strategy_id = previous_id
+            return res
+
+        return wrapper
+
+    Strategy.mitigation_function = wrapped_mitigation_function
+
     cal.run(log="flat")
     print()
 
@@ -208,24 +240,16 @@ def main() -> None:
         s_dict = strategy.to_dict()
         tech = s_dict.get("technique", "")
 
-        resources = []
         improvements = []
+        # Calculate exactly how many operations this strategy executed per
+        # problem on average
+        avg_resource = exact_costs.get(strategy_id, 0) / len(cal.problems)
+
         for problem in cal.problems:
             noisy_err, mitigated_err = cal.results._get_errors(
                 strategy_id=strategy_id, problem_id=problem.id
             )
             factor = noisy_err / mitigated_err if mitigated_err > 0 else np.inf
-
-            if tech == "ZNE":
-                scale_factors = s_dict.get("scale_factors", [1.0])
-                cost = problem.circuit_depth * sum(scale_factors)
-            elif tech == "PEC":
-                num_samples = s_dict.get("num_samples", 1)
-                cost = problem.circuit_depth * (1 + num_samples / SHOTS)
-            else:
-                cost = problem.circuit_depth
-
-            resources.append(cost)
             improvements.append(factor)
 
         if tech == "PEC":
@@ -239,7 +263,6 @@ def main() -> None:
             scale_name = s_dict.get("scale_method", "Unknown")
             label = f"{factory_name} ({scale_name})"
 
-        avg_resource = np.mean(resources)
         avg_improvement = np.mean(improvements)
 
         plt.scatter(
@@ -248,19 +271,20 @@ def main() -> None:
 
     plt.axhline(y=1.0, color="r", linestyle="--", label="No Improvement")
     plt.xlabel(
-        "Estimated Resource Cost\n"
-        "(ZNE: avg depth × Σ scale factors  |  "
-        "PEC: avg depth × (1 + samples/shots))",
+        "Exact Resource Cost\n"
+        "(Avg number of operations executed per problem)",
         fontsize=11,
     )
     plt.ylabel("Improvement Factor", fontsize=12)
-    plt.title("ZNE & PEC Strategy Performance vs Resource Cost", fontsize=14)
+    plt.title(
+        "ZNE & PEC Strategy Performance vs Exact Resource Cost", fontsize=14
+    )
     plt.legend(fontsize=9)
     plt.grid(True, linestyle=":", alpha=0.6)
     plt.tight_layout()
     plt.show()
     # If we want to save the plot, we can just uncomment the following lines:
-    # plt.savefig("zne_pec_strategy_performance.png")
+    plt.savefig("zne_pec_strategy_performance.png")
     # print("\nSaved performance plot to 'zne_pec_strategy_performance.png'")
 
 
