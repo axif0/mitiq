@@ -35,9 +35,9 @@ def pauli_twirling_calibrate(
     The number of :math:`f_b` is :math:`2^n`, or :math:`\sum_{i=1}^d C_n^i` if
     the locality :math:`d` is given.
 
-    In the notation of :cite:`chen2021robust`, this function estimates the
-    coefficient :math:`f_b`, which are expansion coefficients of the twirled
-    channel :math:`\mathcal{M}=\sum_b f_b\Pi_b`.
+    In the notation of :cite:`chen2021robust`, this function estimates
+    the coefficient :math:`f_b`, which are expansion coefficients of the
+    twirled channel :math:`\mathcal{M}=\sum_b f_b\Pi_b`.
 
     In practice, the output of this function can be used as calibration data
     for performing the classical shadows protocol in a way which is more
@@ -53,13 +53,13 @@ def pauli_twirling_calibrate(
         zero_state_shadow_outcomes: The output of function
             :func:`shadow_quantum_processing` of zero calibrate state.
         qubits: The qubits to measure, needs to specify when the
-            `zero_state_shadow_outcomes` is None.
+            ``zero_state_shadow_outcomes`` is None.
         executor: The function to use to do quantum measurement, must be same
-            as executor in `shadow_quantum_processing`. Needs to specify when
-            the `zero_state_shadow_outcomes` is None.
+            as executor in :func:`shadow_quantum_processing`. Needs to specify
+            when the ``zero_state_shadow_outcomes`` is None.
         num_total_measurements_calibration: Number of shots per group of
             "median of means" used for calibration. Needs to specify when
-            the `zero_state_shadow_outcomes` is None.
+            the ``zero_state_shadow_outcomes`` is None.
 
     Returns:
         A dictionary containing the calibration outcomes.
@@ -120,7 +120,7 @@ def shadow_quantum_processing(
     Args:
         circuit: The circuit to execute.
         executor: The function to use to do quantum measurement,
-            must be same as executor in `pauli_twirling_calibrate`.
+            must be same as executor in :func:`pauli_twirling_calibrate`.
         num_total_measurements_shadow: Total number of shots for shadow
             estimation.
         random_seed: The random seed to use for the shadow measurements.
@@ -165,8 +165,10 @@ def classical_post_processing(
     state reconstruction or expectation value estimation of observables.
 
     Args:
-        shadow_outcomes: The output of function `shadow_quantum_processing`.
-        calibration_results: The output of function `pauli_twirling_calibrate`.
+        shadow_outcomes: The output of function
+            :func:`shadow_quantum_processing`.
+        calibration_results: The output of function
+            :func:`pauli_twirling_calibrate`.
         observables: The set of observables to measure.
         k_shadows: Number of groups of "median of means" used for shadow
             estimation of expectation values.
