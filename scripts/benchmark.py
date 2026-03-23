@@ -271,8 +271,7 @@ def main() -> None:
 
     plt.axhline(y=1.0, color="r", linestyle="--", label="No Improvement")
     plt.xlabel(
-        "Exact Resource Cost\n"
-        "(Avg number of operations executed per problem)",
+        "Exact Resource Cost\n(Avg number of operations executed per problem)",
         fontsize=11,
     )
     plt.ylabel("Improvement Factor", fontsize=12)
