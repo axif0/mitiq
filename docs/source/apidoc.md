@@ -259,6 +259,15 @@ guarantees. Access them via `mitiq.experimental`.
    :members:
 ```
 
+### Twirled Readout Error eXtinction
+
+#### TREX (High-Level Tools)
+
+```{eval-rst}
+.. automodule:: mitiq.experimental.trex.trex
+   :members:
+```
+
 ### Virtual Distillation
 
 ```{eval-rst}
