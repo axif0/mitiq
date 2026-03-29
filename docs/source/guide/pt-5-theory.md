@@ -18,38 +18,15 @@ is a quantum noise tailoring technique that transforms an arbitrary noise
 channel into a stochastic Pauli channel by randomly conjugating operations
 with Pauli operators and averaging over the results.
 
-## Overview
+The sections below define the Pauli twirl, describe dressed twirling as 
+implemented in Mitiq, use the Pauli transfer matrix (PTM) to visualize the 
+effect of twirling on noise, and briefly discuss finite sampling and error-rate 
+scaling.
 
-1. PT is a noise-agnostic tailoring technique designed to be composed with
-   more direct mitigation methods.
+## The Pauli twirl of a channel
 
-2. For Markovian noise, PT symmetrizes the noise channel
-   (analogous to dynamical decoupling {cite}`Viola_1998_PRA, Viola_1999_PRL, Zhang_2014_PRL`).
-
-3. The success of PT depends on the noise characteristics and the quantum
-   system. While PT generally simplifies the noise channel, it can in
-   some cases produce a completely depolarizing channel with total loss of
-   quantum information.
-
-In the context of quantum error mitigation, PT is closer to [DDD](ddd-5-theory.md)
-but stands apart as a noise tailoring technique. PT's distinguishing characteristics:
-
-- It does not reduce noise on its own, but tailors the noise so that downstream
-  techniques can mitigate it more effectively.
-
-- It generates multiple circuits with random Pauli modifications and averages
-  over their results. There is no need for linear combinations of noisy results
-  as in [ZNE](zne-5-theory.md), [PEC](pec-5-theory.md), and [CDR](cdr-5-theory.md).
-
-- The error mitigation overhead is minimal: there is no increase in statistical
-  uncertainty in the final result beyond the standard sampling variance.
-
-## Mathematical formulation
-
-### The Pauli twirl of a channel
-
-Let $\mathcal{P}_n = \{I, X, Y, Z\}^{\otimes n}$ be the $n$-qubit Pauli group
-(with $|\mathcal{P}_n| = 4^n$ elements, ignoring phases). Given an arbitrary
+Let $P_n = \{I, X, Y, Z\}^{\otimes n}$ be the $n$-qubit Pauli group
+(with $|P_n| = 4^n$ elements, ignoring phases). Given an arbitrary
 CPTP map $\mathcal{E}$ with Kraus representation
 
 $$
@@ -60,11 +37,11 @@ the **Pauli twirl** of $\mathcal{E}$ is defined as
 
 $$
 \mathcal{T}_P[\mathcal{E}](\rho)
-= \frac{1}{4^n} \sum_{\sigma \in \mathcal{P}_n}
+= \frac{1}{4^n} \sum_{\sigma \in P_n}
   \sigma \,\mathcal{E}(\sigma \rho \sigma^\dagger)\, \sigma^\dagger.
 $$(pauli_twirl_def)
 
-### Key theorem: twirling produces a Pauli channel
+### Twirling produces a Pauli channel
 
 For any CPTP map $\mathcal{E}$, the Pauli twirl $\mathcal{T}_P[\mathcal{E}]$
 is a **Pauli channel**:
@@ -79,10 +56,13 @@ $$
 p_k = \frac{1}{4^n} \sum_j \left| \mathrm{Tr}(\sigma_k K_j) \right|^2.
 $$
 
-This follows from the Schur orthogonality relation for the Pauli group acting by conjugation
-{cite}`Wallman_2016_PRA`.
+This follows from the Schur orthogonality relation for the Pauli group acting
+by conjugation {cite}`Wallman_2016_PRA`. The key consequence is that
+*coherent* (unitary) error components are converted into *incoherent*
+(stochastic) Pauli errors, which are generally easier for downstream
+error mitigation techniques to suppress.
 
-### Gate twirling (dressed twirling)
+## Gate twirling (dressed twirling)
 
 Directly applying Eq. {math:numref}`pauli_twirl_def` to a noisy gate
 $\mathcal{E} = \mathcal{N} \circ U$ would destroy the ideal unitary $U$.
@@ -96,15 +76,12 @@ $$
 
 while the noise $\mathcal{N}$ gets twirled. For Clifford gates (CNOT, CZ),
 the conjugation $U P_i U^\dagger$ always yields another Pauli, making this
-straightforward. The valid twirl pairs $(P, Q, R, S)$ for CNOT and CZ gates
-are stored in {attr}`mitiq.pt.pt.CNOT_twirling_gates` and
+straightforward. Each two-qubit gate is sandwiched by a randomly sampled
+Pauli pair $(P, Q)$ before and a corresponding pair $(R, S)$ after, chosen
+so that the ideal gate is preserved and only the noise is twirled. The valid
+pairs $(P, Q, R, S)$ for CNOT and CZ gates are stored in
+{attr}`mitiq.pt.pt.CNOT_twirling_gates` and
 {attr}`mitiq.pt.pt.CZ_twirling_gates`.
-
-Each two-qubit gate is sandwiched by a randomly sampled Pauli pair $(P, Q)$
-before and a corresponding pair $(R, S)$ after, chosen so that the ideal
-gate is preserved and only the noise gets twirled. The valid pairs
-$(P, Q, R, S)$ for CNOT and CZ gates are stored in
-{attr}`mitiq.pt.pt.CNOT_twirling_gates` and {attr}`mitiq.pt.pt.CZ_twirling_gates`.
 
 ## Pauli Transfer Matrix representation
 
@@ -122,33 +99,20 @@ and lie in $[-1, 1]$.
 
 ### Effect of Pauli twirling on the PTM
 
-**Before twirling:** An arbitrary noise channel has a general PTM with
-off-diagonal elements. These off-diagonal entries encode coherent errors ---
-unitary rotations that mix Pauli components.
-
-**After twirling:** The PTM becomes **diagonal**:
+For a general channel, $\Lambda$ has off-diagonal entries that encode coherent
+mixing between Pauli components. Pauli twirling is the same group average as in
+Eq. {math:numref}`pauli_twirl_def`, so in the PTM basis the twirled channel is
+**diagonal**:
 
 $$
 \Lambda_{\text{twirled}} = \mathrm{diag}(1, \lambda_1, \lambda_2, \ldots, \lambda_{4^n - 1}),
 $$
 
-where each $\lambda_k$ relates to the Pauli channel probabilities $p_k$.
-The off-diagonal elements vanish because the twirl average enforces
-$\Lambda_{ij} = 0$ for $i \neq j$ via the same Schur orthogonality argument.
+with $\Lambda_{ij} = 0$ for $i \neq j$ and each $\lambda_k$ fixed by the Pauli
+weights $p_k$ {cite}`Wallman_2016_PRA`.
 
-### Visualizing the PTM with heatmaps
-
-The table below summarizes the effect of PT on common noise channels.
-
-| Noise channel | Before PT | After PT | Effect of twirling |
-|---|---|---|---|
-| Coherent (e.g. $R_y$ over-rotation) | Off-diagonal PTM elements present | Diagonal PTM (Pauli channel) | Off-diagonal terms average to zero |
-| Depolarizing | Already diagonal PTM | Diagonal PTM (unchanged) | No change --- already a Pauli channel |
-| Bit-flip | Already diagonal PTM | Diagonal PTM (unchanged) | No change --- already a Pauli channel |
-| Amplitude damping | Non-unital, off-diagonal elements | Closer to diagonal after averaging | Partially tailored; non-unital component remains |
-
-The following code generates PTM heatmaps for a CNOT gate under these
-noise channels, before and after Pauli Twirling.
+The following code generates PTM heatmaps for a CNOT gate under several noise 
+channels.
 
 ```{code-cell} ipython3
 import cirq
@@ -242,19 +206,17 @@ fig.tight_layout()
 plt.show()
 ```
 
-The key observation: for coherent noise (top row), PT eliminates the
-off-diagonal PTM elements, converting the noise to a diagonal Pauli channel.
-For noise that is already a Pauli channel (depolarizing, bit-flip),
-PT has no effect. For amplitude damping, the non-unital diagonal
-structure is partially preserved, but off-diagonal coherent components
-are suppressed.
+Coherent $R_y$ noise (top row) shows large off-diagonal PTM entries that are
+suppressed after averaging over twirled circuits. Depolarizing and bit-flip
+noise are already Pauli channels, so their PTMs are essentially unchanged by
+PT. Amplitude damping is non-unital; PT suppresses coherent cross-terms but does
+not turn it into a Pauli channel in the same way as for coherent gate noise.
 
-### Convergence with number of twirled circuits
+## Convergence with number of twirled circuits
 
-The `num_circuits` parameter controls how many independently twirled variants
-are generated and averaged. With too few circuits, the off-diagonal PTM
-components are only partially averaged out, and residual coherent errors
-remain. The following example shows this convergence.
+The twirl in Eq. {math:numref}`pauli_twirl_def` is estimated by drawing $N$
+twirled circuits independently and averaging expectation values. Too small $N$
+leaves a biased estimate of the fully twirled channel.
 
 ```{code-cell} ipython3
 from numpy import pi
@@ -319,22 +281,17 @@ plt.show()
 ```
 
 ```{note}
-The exact convergence depends on the circuit, noise model, and noise strength.
-For strong coherent noise, more twirled circuits are needed to average out the
-off-diagonal PTM components. As a rule of thumb, 50--100 variants is
-a reasonable starting point for most applications.
+Convergence speed depends on the circuit, noise model, and noise strength.
+Strong coherent noise typically needs more twirled circuits; 50–100 variants is
+often used as a starting point in practice.
 ```
 
-### Connection to error scaling
+## Connection to error scaling
 
-The PTM representation makes it straightforward to see why coherent noise
-accumulates more severely than incoherent noise. For a coherent error such as
-a small rotation by angle $\theta$, the PTM has off-diagonal entries of order
-$\theta$. When gates are composed, these off-diagonal terms can interfere
-constructively, causing the worst-case error to scale as
-$\sqrt{r(\mathcal{E})} \propto \theta$ {cite}`Wallman_2014`.
-
-For an incoherent (Pauli) channel, the PTM is diagonal and all entries
-deviate from the ideal by $O(\theta^2)$, so errors accumulate linearly:
-$r(\mathcal{E}) \propto \theta^2$. After Pauli twirling, the off-diagonal
-terms vanish and the coherent quadratic penalty is removed.
+Small coherent rotations contribute PTM off-diagonal terms of order $\theta$
+that can add constructively across gates, so worst-case error measures can
+scale like $\sqrt{r(\mathcal{E})} \propto \theta$ {cite}`Wallman_2014`. Pauli
+noise corresponds to a diagonal PTM with deviations $O(\theta^2)$ from the
+identity, which accumulates more favorably. After twirling, the coherent
+cross-terms are removed in the averaged channel, which is why PT is composed
+with QEM methods that assume stochastic Pauli-like noise.
