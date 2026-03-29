@@ -9,36 +9,6 @@
 
 ## Error-Mitigation Techniques
 
-### Classical Shadows
-
-#### Classical Shadows (High-Level Tools)
-
-```{eval-rst}
-.. automodule:: mitiq.shadows.shadows
-   :members:
-```
-
-#### Quantum Processing
-
-```{eval-rst}
-.. automodule:: mitiq.shadows.quantum_processing
-   :members:
-```
-
-#### Classical Post-Processing
-
-```{eval-rst}
-.. automodule:: mitiq.shadows.classical_postprocessing
-   :members:
-```
-
-#### Utility Functions
-
-```{eval-rst}
-.. automodule:: mitiq.shadows.shadows_utils
-   :members:
-```
-
 ### Clifford Data Regression
 
 #### Clifford Data Regression (High-Level Tools)
@@ -108,29 +78,6 @@ See Ref. {cite}`Czarnik_2021_Quantum` for more details on these methods.
 
 ```{eval-rst}
 .. automodule:: mitiq.pt.pt
-   :members:
-```
-
-### Probabilistic Error Amplification
-
-#### Probabilistic Error Amplification (High-Level Tools)
-
-```{eval-rst}
-.. automodule:: mitiq.pea.pea
-   :members:
-```
-
-#### Noise Amplification Utilities
-
-```{eval-rst}
-.. automodule:: mitiq.pea.scale_amplifications
-   :members:
-```
-
-#### Depolarizing Amplifications
-
-```{eval-rst}
-.. automodule:: mitiq.pea.amplifications.amplify_depolarizing
    :members:
 ```
 
@@ -254,10 +201,77 @@ See Ref. {cite}`Czarnik_2021_Quantum` for more details on these methods.
    :members:
 ```
 
+## Experimental Techniques
+
+The following techniques have unstable APIs and are not covered by mitiq's semantic versioning
+guarantees. Access them via `mitiq.experimental`.
+
+### Classical Shadows
+
+#### Classical Shadows (High-Level Tools)
+
+```{eval-rst}
+.. automodule:: mitiq.experimental.shadows.shadows
+   :members:
+```
+
+#### Quantum Processing
+
+```{eval-rst}
+.. automodule:: mitiq.experimental.shadows.quantum_processing
+   :members:
+```
+
+#### Classical Post-Processing
+
+```{eval-rst}
+.. automodule:: mitiq.experimental.shadows.classical_postprocessing
+   :members:
+```
+
+#### Utility Functions
+
+```{eval-rst}
+.. automodule:: mitiq.experimental.shadows.shadows_utils
+   :members:
+```
+
+### Probabilistic Error Amplification
+
+#### Probabilistic Error Amplification (High-Level Tools)
+
+```{eval-rst}
+.. automodule:: mitiq.experimental.pea.pea
+   :members:
+```
+
+#### Noise Amplification Utilities
+
+```{eval-rst}
+.. automodule:: mitiq.experimental.pea.scale_amplifications
+   :members:
+```
+
+#### Depolarizing Amplifications
+
+```{eval-rst}
+.. automodule:: mitiq.experimental.pea.amplifications.amplify_depolarizing
+   :members:
+```
+
+### Twirled Readout Error eXtinction
+
+#### TREX (High-Level Tools)
+
+```{eval-rst}
+.. automodule:: mitiq.experimental.trex.trex
+   :members:
+```
+
 ### Virtual Distillation
 
 ```{eval-rst}
-.. automodule:: mitiq.vd.vd
+.. automodule:: mitiq.experimental.vd.vd
    :members:
 ```
 

@@ -33,14 +33,14 @@ dependencies = [
 
 [project.optional-dependencies]
 braket = [
-    "amazon-braket-sdk>=1.97,<1.114",
+    "amazon-braket-sdk>=1.97,<1.115",
     "cirq-ionq>=1.6.0,<1.7.0",
     "llvmlite==0.46.0",
     "numba==0.64.0",
 ]
 pennylane = [
     "pennylane-qiskit~=0.43.0",
-    "pennylane~=0.43.1",
+    "pennylane~=0.44.1",
 ]
 pyquil = [
     "pyquil~=4.17.0",
@@ -61,7 +61,7 @@ dev = [
     "pytest==9.0.2",
     "pytest-xdist[psutil]==3.0.2",
     "pytest-cov==7.0.0",
-    "ruff==0.3.1",
+    "ruff==0.15.6",
     "mypy==1.0.0",
     "types-tabulate",
 ]
@@ -118,6 +118,9 @@ filterwarnings = [
     # TODO: these are probably too restrictive
     'ignore::UserWarning',
     'ignore::DeprecationWarning',
+    # Experimental modules emit FutureWarning by design; suppress in test suite
+    # since the warning behavior is covered by mitiq/tests/test_experimental.py
+    'ignore:mitiq\.\w+ is experimental:FutureWarning',
 ]
 
 [tool.mypy]

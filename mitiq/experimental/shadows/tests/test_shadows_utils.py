@@ -8,7 +8,7 @@ import math
 import numpy as np
 
 import mitiq
-from mitiq.shadows.shadows_utils import (
+from mitiq.experimental.shadows.shadows_utils import (
     batch_calibration_data,
     create_string,
     fidelity,
@@ -67,6 +67,6 @@ def test_n_measurements_opts_expectation_bound():
 def test_fidelity():
     state_vector = np.array([0.5, 0.5, 0.5, 0.5])
     rho = np.eye(4) / 4
-    assert np.isclose(
-        fidelity(state_vector, rho), 0.25
-    ), f"Expected 0.25, got {fidelity(state_vector, rho)}"
+    assert np.isclose(fidelity(state_vector, rho), 0.25), (
+        f"Expected 0.25, got {fidelity(state_vector, rho)}"
+    )

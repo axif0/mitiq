@@ -15,7 +15,7 @@ kernelspec:
 
 Probabilistic error amplification (PEA) estimates expectation values by probabilistically sampling noise-amplified circuits at several noise levels and extrapolating back to the zero-noise limit.
 
-In Mitiq, this can be executed in a single call to {func}`.execute_with_pea` or step-by-step using {func}`mitiq.pea.pea.construct_circuits` and {func}`mitiq.pea.pea.combine_results`.
+In Mitiq, this can be executed in a single call to {func}`.execute_with_pea` or step-by-step using {func}`mitiq.experimental.pea.pea.construct_circuits` and {func}`mitiq.experimental.pea.pea.combine_results`.
 
 As with all techniques, PEA is compatible with any frontend supported by Mitiq:
 
@@ -82,7 +82,7 @@ PEA can be implemented with a single call to
 {func}`.execute_with_pea`.
 
 ```{code-cell} ipython3
-from mitiq import pea
+from mitiq.experimental import pea
 from mitiq.zne.inference import LinearFactory
 
 scale_factors = [1.0, 1.6, 2.4]
@@ -113,7 +113,8 @@ If you want more control over the process, you can split PEA into two stages:
 2. Combine the results and extrapolate to the zero-noise limit.
 
 ```{code-cell} ipython3
-from mitiq import Executor, pea
+from mitiq import Executor
+from mitiq.experimental import pea
 from mitiq.zne.inference import LinearFactory
 
 scale_factors = [1.0, 1.6, 2.4]

@@ -11,13 +11,13 @@ import cirq
 
 import mitiq
 from mitiq import MeasurementResult
-from mitiq.interface.mitiq_cirq.cirq_utils import (
-    sample_bitstrings as cirq_sample_bitstrings,
-)
-from mitiq.shadows.shadows import (
+from mitiq.experimental.shadows.shadows import (
     classical_post_processing,
     pauli_twirling_calibrate,
     shadow_quantum_processing,
+)
+from mitiq.interface.mitiq_cirq.cirq_utils import (
+    sample_bitstrings as cirq_sample_bitstrings,
 )
 
 # define a fully entangled state
@@ -67,19 +67,14 @@ def test_pauli_twirling_calibrate():
         assert isinstance(value, Number)
 
 
-def test_shadow_quantum_processing():
-    # Call the function with valid inputs
+def test_shadow_quantum_processing_return_type():
     result = shadow_quantum_processing(
         circuit, executor, num_total_measurements_shadow=10
     )
 
-    # Check that the result is a tuple
-    assert isinstance(result, tuple), f"Expected a tuple, got {type(result)}"
+    assert isinstance(result, tuple)
 
-    # Check that the tuple contains two lists
-    assert (
-        len(result) == 2
-    ), f"Expected two lists in the tuple, got {len(result)}"
+    assert len(result) == 2
     assert isinstance(result[0], list)
     assert isinstance(result[1], list)
 
@@ -96,12 +91,7 @@ def test_classical_post_processing():
         shadow_outcomes, state_reconstruction=True
     )
 
-    # Check that the result is a dictionary
-    assert isinstance(
-        result, dict
-    ), f"Expected a dictionary, got {type(result)}"
-
-    # Check that the dictionary contains the expected keys
+    assert isinstance(result, dict)
     assert "reconstructed_state" in result
 
     # Call the function with valid inputs and observables provided
