@@ -15,7 +15,11 @@ kernelspec:
 
 ## Advantages
 
-The main advantage of Pauli Twirling (PT) is that it converts arbitrary, and potentially coherent, noise into stochastic Pauli (incoherent) noise. This is highly beneficial because coherent noise (e.g., gate over-rotations) accumulates quadratically with circuit depth, while incoherent noise accumulates only linearly. By randomly conjugating noisy gates with Pauli operators and averaging the results, PT effectively suppresses the worst-case error scaling. More details are given in [What is the theory behind PT?](pt-5-theory.md).
+The main advantage of Pauli Twirling (PT) is that it converts arbitrary, and potentially coherent, noise into stochastic Pauli (incoherent) noise. This conversion is highly beneficial due to how these two types of noise accumulate:
+- **Coherent noise** (e.g., systematic gate over-rotations, calibration errors) maintains quantum superposition but shifts the state vector in a deterministic direction. When similar coherent errors occur repeatedly in a deep circuit, they can add up constructively, causing the overall error to accumulate *quadratically* with the circuit depth.
+- **Incoherent noise** (e.g., depolarization, stochastic Pauli bit-flips or phase-flips) represents a random mixture of quantum states. Because the errors are stochastic rather than deterministic, they do not add constructively. Thus, incoherent noise accumulates only *linearly* with circuit depth.
+
+By randomly conjugating noisy gates with Pauli operators and averaging the results, PT effectively destroys the deterministic coherence of the errors, scattering them into random Pauli errors. This suppresses the worst-case quadratic error scaling and bounds the problem. More details are given in [What is the theory behind PT?](pt-5-theory.md).
 
 Additionally, PT is noise-agnostic and easy to use, requiring no prior knowledge of the underlying noise model to operate. Because it restructures arbitrary errors into well-behaved stochastic channels, it is frequently used as a noise tailoring technique to improve the performance of downstream quantum error mitigation (QEM) methods, such as [ZNE](zne.md), [PEC](pec.md), and [CDR](cdr.md). See the [stacking PT with QEM section](pt-3-options.md) for details.
 
